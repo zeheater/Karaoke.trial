@@ -127,8 +127,9 @@ namespace Test02Window {
 			this->axWMP->Location = System::Drawing::Point(0, 0);
 			this->axWMP->Name = L"axWMP";
 			this->axWMP->OcxState = (cli::safe_cast<System::Windows::Forms::AxHost::State^  >(resources->GetObject(L"axWMP.OcxState")));
-			this->axWMP->Size = System::Drawing::Size(792, 570);
+			this->axWMP->Size = System::Drawing::Size(793, 576);
 			this->axWMP->TabIndex = 0;
+			this->axWMP->PlayStateChange += gcnew AxWMPLib::_WMPOCXEvents_PlayStateChangeEventHandler(this, &Form1::axWMP_PlayStateChange);
 			// 
 			// button2
 			// 
@@ -152,7 +153,6 @@ namespace Test02Window {
 			this->panelControl->Name = L"panelControl";
 			this->panelControl->Size = System::Drawing::Size(643, 305);
 			this->panelControl->TabIndex = 3;
-			this->panelControl->Visible = false;
 			// 
 			// btnControlUp
 			// 
@@ -310,7 +310,6 @@ namespace Test02Window {
 			// 
 			// btnControlDn
 			// 
-			this->btnControlDn->Anchor = System::Windows::Forms::AnchorStyles::Bottom;
 			this->btnControlDn->ImageKey = L"down";
 			this->btnControlDn->ImageList = this->imageList2;
 			this->btnControlDn->Location = System::Drawing::Point(0, 0);
@@ -318,13 +317,14 @@ namespace Test02Window {
 			this->btnControlDn->Size = System::Drawing::Size(26, 15);
 			this->btnControlDn->TabIndex = 8;
 			this->btnControlDn->UseVisualStyleBackColor = true;
+			this->btnControlDn->Visible = false;
 			this->btnControlDn->Click += gcnew System::EventHandler(this, &Form1::btnControlDn_Click);
 			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(792, 570);
+			this->ClientSize = System::Drawing::Size(793, 576);
 			this->Controls->Add(this->btnControlDn);
 			this->Controls->Add(this->panelControl);
 			this->Controls->Add(this->axWMP);
@@ -358,7 +358,15 @@ namespace Test02Window {
 			axWMP->URL = gcnew System::String( library_List[id].filename.c_str() );
 		} catch (...) {}
 	}
-	
+	private: void library_PlayNext() {
+		if (!lvPlaylist->Items->Count) return;
+		
+		library_Play( Convert::ToInt32(lvPlaylist->Items[0]->Text));
+		System::Diagnostics::Debug::WriteLine("Playing "+lvPlaylist->Items[0]->Text);
+		
+		axWMP->Ctlcontrols->play();
+		lvPlaylist->Items->Remove(lvPlaylist->Items[0]);		
+	}
 	private: void library_Init(){
 		array<String^>^ file;
 		try {
@@ -397,8 +405,10 @@ namespace Test02Window {
 		
 		lAdd = lvPlaylist->Items->Add( lvLibrary->SelectedItems[0]->Text );
 		lAdd->SubItems->Add( lvLibrary->SelectedItems[0]->SubItems[1]->Text );
-
-		//library_Play( Convert::ToInt32(lvLibrary->SelectedItems[0]->Text));
+		
+		System::Diagnostics::Debug::WriteLine(axWMP->playState);
+		if (axWMP->playState == WMPLib::WMPPlayState::wmppsUndefined || axWMP->playState == WMPLib::WMPPlayState::wmppsStopped)
+			library_PlayNext();
 			 }
 private: System::Void btnControlUp_Click(System::Object^  sender, System::EventArgs^  e) {
 	panelControl->Visible = false;
@@ -447,6 +457,20 @@ private: System::Void lvPlaylist_SelectedIndexChanged(System::Object^  sender, S
 	btnPlaylistDel->Enabled = true; 
 	btnPlaylistUp->Enabled = (lvPlaylist->SelectedItems[0]->Index != 0);
 	btnPlaylistDn->Enabled = (lvPlaylist->SelectedItems[0]->Index < lvPlaylist->Items->Count-1);
+		 }
+private: System::Void axWMP_PlayStateChange(System::Object^  sender, AxWMPLib::_WMPOCXEvents_PlayStateChangeEvent^  e) {
+	static bool bOnProc = false;
+	
+	System::Diagnostics::Debug::WriteLine(axWMP->playState );
+	if (axWMP->playState == WMPLib::WMPPlayState::wmppsStopped) {
+		if (bOnProc) { bOnProc = false; //axWMP->Ctlcontrols->play(); 
+			System::Diagnostics::Debug::WriteLine("Proc on bOnProc: aborting");
+			return; }
+			
+		System::Diagnostics::Debug::WriteLine("Proc on success");
+		bOnProc = true;
+		library_PlayNext();
+	}
 		 }
 };
 }
