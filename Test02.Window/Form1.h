@@ -130,6 +130,7 @@ namespace Test02Window {
 			this->axWMP->Size = System::Drawing::Size(793, 576);
 			this->axWMP->TabIndex = 0;
 			this->axWMP->PlayStateChange += gcnew AxWMPLib::_WMPOCXEvents_PlayStateChangeEventHandler(this, &Form1::axWMP_PlayStateChange);
+			this->axWMP->OpenStateChange += gcnew AxWMPLib::_WMPOCXEvents_OpenStateChangeEventHandler(this, &Form1::axWMP_OpenStateChange);
 			// 
 			// button2
 			// 
@@ -360,11 +361,12 @@ namespace Test02Window {
 	}
 	private: void library_PlayNext() {
 		if (!lvPlaylist->Items->Count) return;
-		
-		library_Play( Convert::ToInt32(lvPlaylist->Items[0]->Text));
 		System::Diagnostics::Debug::WriteLine("Playing "+lvPlaylist->Items[0]->Text);
 		
-		axWMP->Ctlcontrols->play();
+		//library_Play( Convert::ToInt32(lvPlaylist->Items[0]->Text));		
+		WMPLib::IWMPMedia^ newSong = axWMP->newMedia( gcnew System::String( library_List[Convert::ToInt32(lvPlaylist->Items[0]->Text)].filename.c_str() ) );
+		axWMP->currentPlaylist->appendItem(newSong);
+
 		lvPlaylist->Items->Remove(lvPlaylist->Items[0]);		
 	}
 	private: void library_Init(){
@@ -407,8 +409,11 @@ namespace Test02Window {
 		lAdd->SubItems->Add( lvLibrary->SelectedItems[0]->SubItems[1]->Text );
 		
 		System::Diagnostics::Debug::WriteLine(axWMP->playState);
-		if (axWMP->playState == WMPLib::WMPPlayState::wmppsUndefined || axWMP->playState == WMPLib::WMPPlayState::wmppsStopped)
+		
+		if (axWMP->playState == WMPLib::WMPPlayState::wmppsUndefined || axWMP->playState == WMPLib::WMPPlayState::wmppsStopped) {
 			library_PlayNext();
+			axWMP->Ctlcontrols->play();
+		}
 			 }
 private: System::Void btnControlUp_Click(System::Object^  sender, System::EventArgs^  e) {
 	panelControl->Visible = false;
@@ -459,18 +464,14 @@ private: System::Void lvPlaylist_SelectedIndexChanged(System::Object^  sender, S
 	btnPlaylistDn->Enabled = (lvPlaylist->SelectedItems[0]->Index < lvPlaylist->Items->Count-1);
 		 }
 private: System::Void axWMP_PlayStateChange(System::Object^  sender, AxWMPLib::_WMPOCXEvents_PlayStateChangeEvent^  e) {
-	static bool bOnProc = false;
-	
 	System::Diagnostics::Debug::WriteLine(axWMP->playState );
-	if (axWMP->playState == WMPLib::WMPPlayState::wmppsStopped) {
-		if (bOnProc) { bOnProc = false; //axWMP->Ctlcontrols->play(); 
-			System::Diagnostics::Debug::WriteLine("Proc on bOnProc: aborting");
-			return; }
-			
-		System::Diagnostics::Debug::WriteLine("Proc on success");
-		bOnProc = true;
-		library_PlayNext();
+	if (axWMP->playState == WMPLib::WMPPlayState::wmppsMediaEnded) {
+		library_PlayNext();		
 	}
+		 }
+private: System::Void axWMP_OpenStateChange(System::Object^  sender, AxWMPLib::_WMPOCXEvents_OpenStateChangeEvent^  e) {
+	System::Diagnostics::Debug::WriteLine( axWMP->openState );
+
 		 }
 };
 }
