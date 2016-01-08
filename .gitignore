@@ -20,6 +20,7 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+Library/
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -233,3 +234,6 @@ _Pvt_Extensions
 .fake/
 *.mp4
 *.suo
+
+# Library contents
+Library/*
