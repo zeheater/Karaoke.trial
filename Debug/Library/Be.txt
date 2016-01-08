@@ -1,6 +1,0 @@
-title=Be
-artist=Song Riders
-album=Devil Survivors 2 ED
-audio1=
-audio2=
-v_ext=mp4

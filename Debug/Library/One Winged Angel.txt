@@ -1,6 +1,0 @@
-title=One Winged Angel
-artist=Nobue Uematsu
-album=Final Fantasy VII
-audio1=
-audio2=
-v_ext=mp4
