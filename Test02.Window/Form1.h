@@ -340,6 +340,7 @@ namespace Test02Window {
 
 	   }
 #pragma endregion
+
     private: void library_Display( std::string sFilter) {
 			  System::Windows::Forms::ListViewItem^ lAdd;
 
@@ -360,7 +361,11 @@ namespace Test02Window {
 			  } catch (...) {}
 		   }
     private: void library_PlayNext() {
-			  if (!lvPlaylist->Items->Count) return;
+			  if (!lvPlaylist->Items->Count) {
+				 axWMP->currentPlaylist->clear();
+				 btnControlDn_Click(NULL, System::EventArgs::Empty);
+				 return;
+			  }
 			  System::Diagnostics::Debug::WriteLine("Playing "+lvPlaylist->Items[0]->Text);
 
 			  //library_Play( Convert::ToInt32(lvPlaylist->Items[0]->Text));		
@@ -387,9 +392,8 @@ namespace Test02Window {
     private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) {
 			  //System::Diagnostics::Debug::WriteLine(String::Concat("audio count : ",ctrl->audioLanguageCount));
 			  int audiocount = ((WMPLib::IWMPControls3^)axWMP->Ctlcontrols)->audioLanguageCount;
-			  static int audiopos = 1;
-			  if (audiopos >= audiocount) audiopos = 1;
-			  else audiopos++;
+			  static int audiopos = ((WMPLib::IWMPControls3^)axWMP->Ctlcontrols)->currentAudioLanguageIndex;
+			  audiopos = (audiopos >= audiocount) ? 1 : audiopos + 1;
 			  ((WMPLib::IWMPControls3^)axWMP->Ctlcontrols)->currentAudioLanguageIndex = audiopos;
 			  System::Diagnostics::Debug::WriteLine(audiopos);
 		   }
@@ -470,8 +474,7 @@ namespace Test02Window {
 			  }
 		   }
     private: System::Void axWMP_OpenStateChange(System::Object^  sender, AxWMPLib::_WMPOCXEvents_OpenStateChangeEvent^  e) {
-			  System::Diagnostics::Debug::WriteLine( axWMP->openState );
-
+			  //System::Diagnostics::Debug::WriteLine( axWMP->openState );
 		   }
     };
 }
